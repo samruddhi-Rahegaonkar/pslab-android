@@ -1328,8 +1328,8 @@ public class ScienceLab {
             mPacketHandler.sendByte(mCommandsProto.START_TWO_CHAN_LA);
             mPacketHandler.sendInt(this.MAX_SAMPLES / 4);
             mPacketHandler.sendByte(trigger);
-            mPacketHandler.sendByte((modes.get(1) << 4) | modes.get(0));
-            mPacketHandler.sendByte((chans[1] << 4) | chans[0]);
+            mPacketHandler.sendByte(modes.get(0) | (modes.get(1) << 4));
+            mPacketHandler.sendByte(chans[0] | (chans[1] << 4));
             mPacketHandler.getAcknowledgement();
             for (int i = 0; i < 2; i++) {
                 DigitalChannel temp = this.dChannels.get(i);
@@ -1488,13 +1488,13 @@ public class ScienceLab {
             mPacketHandler.sendByte(mCommandsProto.GET_INITIAL_DIGITAL_STATES);
             byte[] initialStatesBytes = new byte[13];
             mPacketHandler.read(initialStatesBytes, 13);
-            int initial = (initialStatesBytes[0] & 0xff) | ((initialStatesBytes[1] << 8) & 0xff00);
-            int A = (((initialStatesBytes[2] & 0xff) | ((initialStatesBytes[3] << 8) & 0xff00)) - initial) / 2;
-            int B = (((initialStatesBytes[4] & 0xff) | ((initialStatesBytes[5] << 8) & 0xff00)) - initial) / 2 - MAX_SAMPLES / 4;
-            int C = (((initialStatesBytes[6] & 0xff) | ((initialStatesBytes[7] << 8) & 0xff00)) - initial) / 2 - 2 * MAX_SAMPLES / 4;
-            int D = (((initialStatesBytes[8] & 0xff) | ((initialStatesBytes[9] << 8) & 0xff00)) - initial) / 2 - 3 * MAX_SAMPLES / 4;
-            int s = initialStatesBytes[10];
-            int sError = initialStatesBytes[11];
+            int initial = (initialStatesBytes[0] & 0xFF) | ((initialStatesBytes[1] << 8) & 0xFF00);
+            int A = (((initialStatesBytes[2] & 0xFF) | ((initialStatesBytes[3] << 8) & 0xFF00)) - initial) / 2;
+            int B = (((initialStatesBytes[4] & 0xFF) | ((initialStatesBytes[5] << 8) & 0xFF00)) - initial) / 2 - MAX_SAMPLES / 4;
+            int C = (((initialStatesBytes[6] & 0xFF) | ((initialStatesBytes[7] << 8) & 0xFF00)) - initial) / 2 - 2 * MAX_SAMPLES / 4;
+            int D = (((initialStatesBytes[8] & 0xFF) | ((initialStatesBytes[9] << 8) & 0xFF00)) - initial) / 2 - 3 * MAX_SAMPLES / 4;
+            int s = initialStatesBytes[10] & 0xFF;
+            int sError = initialStatesBytes[11] & 0xFF;
             //mPacketHandler.getAcknowledgement();
 
             if (A == 0) A = this.MAX_SAMPLES / 4;
@@ -1559,6 +1559,11 @@ public class ScienceLab {
         }
     }
 
+    private int calculateBufferPosition(int channel, int offset, int channels, int bytes) {
+        int multiplier = (channels < 3) ? 2 : 1;
+        return (channel - 1) * bytes * multiplier + offset;
+    }
+
     /**
      * Fetches the data stored by DMA. integer address increments
      *
@@ -1566,14 +1571,14 @@ public class ScienceLab {
      * @param channel channel number (1-4)
      * @return array of integer data fetched from Logic Analyser.
      */
-    public int[] fetchIntDataFromLA(Integer bytes, Integer channel) {
+    public long[] fetchIntDataFromLA(Integer bytes, Integer channel, Integer channels) {
         if (channel == null) channel = 1;
         try {
             ArrayList<Integer> l = new ArrayList<>();
             for (int i = 0; i < bytes / this.dataSplitting; i++) {
                 mPacketHandler.sendByte(mCommandsProto.COMMON);
                 mPacketHandler.sendByte(mCommandsProto.RETRIEVE_BUFFER);
-                mPacketHandler.sendInt(2500 * (channel - 1) + (i * this.dataSplitting));
+                mPacketHandler.sendInt(calculateBufferPosition(channel, i * this.dataSplitting, channels, bytes));
                 mPacketHandler.sendInt(this.dataSplitting);
                 byte[] data = new byte[this.dataSplitting * 2 + 1];
                 mPacketHandler.read(data, this.dataSplitting * 2 + 1);
@@ -1584,7 +1589,7 @@ public class ScienceLab {
             if ((bytes % this.dataSplitting) != 0) {
                 mPacketHandler.sendByte(mCommandsProto.COMMON);
                 mPacketHandler.sendByte(mCommandsProto.RETRIEVE_BUFFER);
-                mPacketHandler.sendInt(bytes - bytes % this.dataSplitting);
+                mPacketHandler.sendInt(calculateBufferPosition(channel, bytes - bytes % this.dataSplitting, channels, bytes));
                 mPacketHandler.sendInt(bytes % this.dataSplitting);
                 byte[] data = new byte[2 * (bytes % this.dataSplitting) + 1];
                 mPacketHandler.read(data, 2 * (bytes % this.dataSplitting) + 1);
@@ -1593,7 +1598,7 @@ public class ScienceLab {
             }
             if (!l.isEmpty()) {
                 StringBuilder stringBuilder = new StringBuilder();
-                int[] timeStamps = new int[(int) bytes + 1];
+                long[] timeStamps = new long[(int) bytes + 1];
                 for (int i = 0; i < (int) (bytes); i++) {
                     int t = (l.get(i * 2) | (l.get(i * 2 + 1) << 8));
                     timeStamps[i + 1] = t;
@@ -1602,12 +1607,11 @@ public class ScienceLab {
                 }
                 Log.v("Fetched points : ", stringBuilder.toString());
                 //mPacketHandler.getAcknowledgement();
-                Arrays.sort(timeStamps);
                 timeStamps[0] = 1;
                 return timeStamps;
             } else {
                 Log.e("Error : ", "Obtained bytes = 0");
-                int[] temp = new int[2501];
+                long[] temp = new long[2501];
                 Arrays.fill(temp, 0);
                 return temp;
             }
@@ -1661,26 +1665,11 @@ public class ScienceLab {
     }
 
     /**
-     * Reads and stores the channels in this.dChannels.
-     *
-     * @return true if LA channels fetched successfully.
-     */
-    public boolean fetchLAChannels() {
-        LinkedHashMap<String, Integer> data = this.getLAInitialStates();
-        for (int i = 0; i < 4; i++) {
-            if (this.dChannels.get(i).channelNumber < this.digitalChannelsInBuffer) {
-                this.fetchLAChannel(i, data);
-            }
-        }
-        return true;
-    }
-
-    /**
      * @param channelNumber Channel number being used e.g. CH1, CH2, CH3, CH4.
      * @param initialStates State of the digital inputs. returns dictionary with keys 'LA1','LA2','LA3','LA4','RES'
      * @return true if data fetched/loaded successfully.
      */
-    public boolean fetchLAChannel(Integer channelNumber, LinkedHashMap<String, Integer> initialStates) {
+    public boolean fetchLAChannel(Integer channelNumber, LinkedHashMap<String, Integer> initialStates, Integer channels) {
         DigitalChannel dChan = this.dChannels.get(channelNumber);
 
         LinkedHashMap<String, Integer> tempMap = new LinkedHashMap<>();
@@ -1700,7 +1689,7 @@ public class ScienceLab {
             i++;
         }
 
-        int[] temp = this.fetchIntDataFromLA(i, dChan.channelNumber + 1);
+        long[] temp = this.fetchIntDataFromLA(i, dChan.channelNumber + 1, channels);
         double[] data = new double[temp.length - 1];
         if (temp[0] == 1) {
             for (int j = 1; j < temp.length; j++) {
@@ -1727,16 +1716,8 @@ public class ScienceLab {
         tempMap.put("RES", initialStates.get("RES"));
 
         //  Used LinkedHashMap above (initialStates) in which iteration is done sequentially as <key-value> were inserted
-        int i = 0;
-        for (Map.Entry<String, Integer> entry : initialStates.entrySet()) {
-            if (dChan.channelNumber == i) {
-                i = entry.getValue();
-                break;
-            }
-            i++;
-        }
-
-        int[] temp = this.fetchIntDataFromLA(i, dChan.channelNumber + 1);
+        Integer i = initialStates.get("A");
+        long[] temp = this.fetchIntDataFromLA(i, 1, 1);
         double[] data = new double[temp.length - 1];
         if (temp[0] == 1) {
             for (int j = 1; j < temp.length; j++) {
@@ -1751,15 +1732,10 @@ public class ScienceLab {
         dChan.generateAxes();
         int count = 0;
         double[] yAxis = dChan.getYAxis();
-        for (int j = 1; j < yAxis.length; j++) {
-            if (yAxis[i] != yAxis[i - 1]) {
-                count++;
-            }
-        }
-        if (count == this.MAX_SAMPLES / 2 - 2) {
+        if (count == this.MAX_SAMPLES / 2 - 1) {
             LAChannelFrequency = 0;
-        } else if (count != 0 && count != this.MAX_SAMPLES / 2 - 2 && LAChannelFrequency != count) {
-            LAChannelFrequency = count;
+        } else if (yAxis.length != 0 && yAxis.length != this.MAX_SAMPLES / 2 - 1 && LAChannelFrequency != yAxis.length) {
+            LAChannelFrequency = yAxis.length;
         }
         return LAChannelFrequency;
     }
