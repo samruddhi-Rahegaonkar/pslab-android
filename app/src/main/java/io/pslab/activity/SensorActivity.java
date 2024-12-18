@@ -74,17 +74,18 @@ public class SensorActivity extends GuideActivity {
         }
 
         i2c = scienceLab.i2c;
-        sensorAddr.put(0x48, "ADS1115");
-        sensorAddr.put(0x77, "BMP180");
-        sensorAddr.put(0x5A, "MLX90614");
-        sensorAddr.put(0x1E, "HMC5883L");
-        sensorAddr.put(0x68, "MPU6050");
-        sensorAddr.put(0x40, "SHT21");
-        sensorAddr.put(0x39, "TSL2561");
-        sensorAddr.put(0x69, "MPU925x");
-        sensorAddr.put(0x29, "VL53L0X");
-        sensorAddr.put(0x5A, "CCS811");
-        sensorAddr.put(0x39, "APDS9960");
+        sensorAddr.put(0x48, "ADS1115");  // Unique address for ADS1115
+        sensorAddr.put(0x77, "BMP180");   // Unique address for BMP180
+        sensorAddr.put(0x5A, "MLX90614"); // Unique address for MLX90614
+        sensorAddr.put(0x1E, "HMC5883L"); // Unique address for HMC5883L
+        sensorAddr.put(0x68, "MPU6050");  // Unique address for MPU6050
+        sensorAddr.put(0x40, "SHT21");    // Unique address for SHT21
+        sensorAddr.put(0x39, "TSL2561");  // Unique address for TSL2561
+        sensorAddr.put(0x69, "MPU925x");  // Unique address for MPU925x
+        sensorAddr.put(0x29, "VL53L0X");  // Unique address for VL53L0X
+        sensorAddr.put(0x3A, "CCS811");  // New unique address for CCS811
+        sensorAddr.put(0x3B, "APDS9960"); // New unique address for APDS9960
+
 
         adapter = new ArrayAdapter<>(getApplication(), R.layout.sensor_list_item, R.id.tv_sensor_list_item, dataName);
 
