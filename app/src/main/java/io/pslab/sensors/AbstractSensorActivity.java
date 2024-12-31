@@ -1,5 +1,7 @@
 package io.pslab.sensors;
 
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -20,6 +22,13 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import java.util.Locale;
 
@@ -240,6 +249,72 @@ abstract class AbstractSensorActivity extends AppCompatActivity {
      */
     protected long getStartTime() {
         return startTime;
+    }
+
+    /**
+     * Update data of a chart.
+     *
+     * @param chart       chart to update
+     * @param timeElapsed time elapsed since last update of chart
+     * @param dataSet     data set which contains data to display
+     */
+    protected static void updateChart(LineChart chart, float timeElapsed, ILineDataSet dataSet) {
+        updateChart(chart, timeElapsed, new LineData(dataSet));
+    }
+
+    /**
+     * Update data of a chart.
+     *
+     * @param chart       chart to update
+     * @param timeElapsed time elapsed since last update of chart
+     * @param dataSets    data sets which contains data to display
+     */
+    protected static void updateChart(LineChart chart, float timeElapsed, ILineDataSet... dataSets) {
+        updateChart(chart, timeElapsed, new LineData(dataSets));
+    }
+
+    private static void updateChart(LineChart chart, float timeElapsed, LineData data) {
+        data.setValueTextSize(0f); // turn off text
+        chart.setData(data);
+        chart.notifyDataSetChanged();
+        chart.setVisibleXRangeMaximum(10);
+        chart.moveViewToX(timeElapsed);
+    }
+
+    protected void initChart(LineChart chart) {
+        XAxis x = chart.getXAxis();
+        YAxis y = chart.getAxisLeft();
+        YAxis y2 = chart.getAxisRight();
+
+        chart.setTouchEnabled(true);
+        chart.setHighlightPerDragEnabled(true);
+        chart.setDragEnabled(true);
+        chart.setScaleEnabled(true);
+        chart.setDrawGridBackground(false);
+        chart.setPinchZoom(true);
+        chart.setScaleYEnabled(false);
+        chart.setBackgroundColor(Color.BLACK);
+        chart.getDescription().setEnabled(false);
+        chart.setAutoScaleMinMaxEnabled(true);
+        chart.setNoDataText(getString(R.string.no_data_fetched));
+        chart.setNoDataTextColor(Color.YELLOW);
+        chart.setNoDataTextTypeface(Typeface.MONOSPACE);
+
+        Legend l = chart.getLegend();
+        l.setForm(Legend.LegendForm.LINE);
+        l.setTextColor(Color.WHITE);
+
+        x.setTextColor(Color.WHITE);
+        x.setDrawGridLines(true);
+        x.setAvoidFirstLastClipping(true);
+
+        y.setTextColor(Color.WHITE);
+        y.setDrawGridLines(true);
+        y.setLabelCount(10, true);
+        y.setGranularity(0.1f);
+
+        y2.setDrawGridLines(false);
+
     }
 
     @Override

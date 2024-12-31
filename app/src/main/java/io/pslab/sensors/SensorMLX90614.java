@@ -2,7 +2,6 @@ package io.pslab.sensors;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,11 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
 import java.io.IOException;
@@ -76,73 +71,8 @@ public class SensorMLX90614 extends AbstractSensorActivity {
         mChartObjectTemperature = findViewById(R.id.chart_obj_temp_mlx);
         mChartAmbientTemperature = findViewById(R.id.chart_amb_temp_mlx);
 
-        XAxis xObjectTemperature = mChartObjectTemperature.getXAxis();
-        YAxis yObjectTemperature = mChartObjectTemperature.getAxisLeft();
-        YAxis yObjectTemperature2 = mChartObjectTemperature.getAxisRight();
-
-        XAxis xAmbientTemperature = mChartAmbientTemperature.getXAxis();
-        YAxis yAmbientTemperature = mChartAmbientTemperature.getAxisLeft();
-        YAxis yAmbientTemperature2 = mChartAmbientTemperature.getAxisRight();
-
-        mChartObjectTemperature.setTouchEnabled(true);
-        mChartObjectTemperature.setHighlightPerDragEnabled(true);
-        mChartObjectTemperature.setDragEnabled(true);
-        mChartObjectTemperature.setScaleEnabled(true);
-        mChartObjectTemperature.setDrawGridBackground(false);
-        mChartObjectTemperature.setPinchZoom(true);
-        mChartObjectTemperature.setScaleYEnabled(false);
-        mChartObjectTemperature.setBackgroundColor(Color.BLACK);
-        mChartObjectTemperature.getDescription().setEnabled(false);
-
-        LineData data = new LineData();
-        data.setValueTextColor(Color.WHITE);
-        mChartObjectTemperature.setData(data);
-
-        Legend l = mChartObjectTemperature.getLegend();
-        l.setForm(Legend.LegendForm.LINE);
-        l.setTextColor(Color.WHITE);
-
-        xObjectTemperature.setTextColor(Color.WHITE);
-        xObjectTemperature.setDrawGridLines(true);
-        xObjectTemperature.setAvoidFirstLastClipping(true);
-
-        yObjectTemperature.setTextColor(Color.WHITE);
-        yObjectTemperature.setAxisMaximum(125f);
-        yObjectTemperature.setAxisMinimum(-40f);
-        yObjectTemperature.setDrawGridLines(true);
-        yObjectTemperature.setLabelCount(10);
-
-        yObjectTemperature2.setDrawGridLines(false);
-
-        mChartAmbientTemperature.setTouchEnabled(true);
-        mChartAmbientTemperature.setHighlightPerDragEnabled(true);
-        mChartAmbientTemperature.setDragEnabled(true);
-        mChartAmbientTemperature.setScaleEnabled(true);
-        mChartAmbientTemperature.setDrawGridBackground(false);
-        mChartAmbientTemperature.setPinchZoom(true);
-        mChartAmbientTemperature.setScaleYEnabled(false);
-        mChartAmbientTemperature.setBackgroundColor(Color.BLACK);
-        mChartAmbientTemperature.getDescription().setEnabled(false);
-
-        LineData data2 = new LineData();
-        data.setValueTextColor(Color.WHITE);
-        mChartAmbientTemperature.setData(data2);
-
-        Legend l2 = mChartAmbientTemperature.getLegend();
-        l2.setForm(Legend.LegendForm.LINE);
-        l2.setTextColor(Color.WHITE);
-
-        xAmbientTemperature.setTextColor(Color.WHITE);
-        xAmbientTemperature.setDrawGridLines(true);
-        xAmbientTemperature.setAvoidFirstLastClipping(true);
-
-        yAmbientTemperature.setTextColor(Color.WHITE);
-        yAmbientTemperature.setAxisMaximum(380f);
-        yAmbientTemperature.setAxisMinimum(-70f);
-        yAmbientTemperature.setDrawGridLines(true);
-        yAmbientTemperature.setLabelCount(10);
-
-        yAmbientTemperature2.setDrawGridLines(false);
+        initChart(mChartObjectTemperature);
+        initChart(mChartAmbientTemperature);
 
         if (savedInstanceState == null) {
             entriesObjectTemperature = new ArrayList<>();
@@ -236,23 +166,11 @@ public class SensorMLX90614 extends AbstractSensorActivity {
                 tvSensorMLX90614AmbientTemp.setText(DataFormatter.formatDouble(dataMLX90614AmbientTemp, DataFormatter.HIGH_PRECISION_FORMAT));
             }
 
-            LineDataSet dataSet1 = new LineDataSet(entriesObjectTemperature, getString(R.string.object_temp));
-            LineDataSet dataSet2 = new LineDataSet(entriesAmbientTemperature, getString(R.string.ambient_temp));
+            LineDataSet dataSetObjectTemperature = new LineDataSet(entriesObjectTemperature, getString(R.string.object_temp));
+            LineDataSet dataSetAmbientTemperature = new LineDataSet(entriesAmbientTemperature, getString(R.string.ambient_temp));
 
-            dataSet1.setDrawCircles(true);
-            dataSet2.setDrawCircles(true);
-
-            LineData data1 = new LineData(dataSet1);
-            mChartObjectTemperature.setData(data1);
-            mChartObjectTemperature.notifyDataSetChanged();
-            mChartObjectTemperature.setVisibleXRangeMaximum(10);
-            mChartObjectTemperature.moveViewToX(timeElapsed);
-
-            LineData data2 = new LineData(dataSet2);
-            mChartAmbientTemperature.setData(data2);
-            mChartAmbientTemperature.notifyDataSetChanged();
-            mChartAmbientTemperature.setVisibleXRangeMaximum(10);
-            mChartAmbientTemperature.moveViewToX(timeElapsed);
+            updateChart(mChartObjectTemperature, timeElapsed, dataSetObjectTemperature);
+            updateChart(mChartAmbientTemperature, timeElapsed, dataSetAmbientTemperature);
         }
     }
 

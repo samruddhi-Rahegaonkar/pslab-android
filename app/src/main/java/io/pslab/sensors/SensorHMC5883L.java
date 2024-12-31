@@ -9,13 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,39 +60,8 @@ public class SensorHMC5883L extends AbstractSensorActivity {
         tvSensorHMC5883Lby = findViewById(R.id.tv_sensor_hmc5883l_by);
         tvSensorHMC5883Lbz = findViewById(R.id.tv_sensor_hmc5883l_bz);
         mChart = findViewById(R.id.chart_hmc5883l);
-        XAxis x = mChart.getXAxis();
-        YAxis y = mChart.getAxisLeft();
-        YAxis y2 = mChart.getAxisRight();
 
-        mChart.setTouchEnabled(true);
-        mChart.setHighlightPerDragEnabled(true);
-        mChart.setDragEnabled(true);
-        mChart.setScaleEnabled(true);
-        mChart.setDrawGridBackground(false);
-        mChart.setPinchZoom(true);
-        mChart.setScaleYEnabled(false);
-        mChart.setBackgroundColor(Color.BLACK);
-        mChart.getDescription().setEnabled(false);
-
-        LineData data = new LineData();
-        data.setValueTextColor(Color.WHITE);
-        mChart.setData(data);
-
-        Legend l = mChart.getLegend();
-        l.setForm(Legend.LegendForm.LINE);
-        l.setTextColor(Color.WHITE);
-
-        x.setTextColor(Color.WHITE);
-        x.setDrawGridLines(true);
-        x.setAvoidFirstLastClipping(true);
-
-        y.setTextColor(Color.WHITE);
-        y.setAxisMaximum(10f);
-        y.setAxisMinimum(-10f);
-        y.setDrawGridLines(true);
-        y.setLabelCount(10);
-
-        y2.setDrawGridLines(false);
+        initChart(mChart);
 
         if (savedInstanceState == null) {
             entriesBx = new ArrayList<>();
@@ -159,28 +123,15 @@ public class SensorHMC5883L extends AbstractSensorActivity {
                 tvSensorHMC5883Lbz.setText(DataFormatter.formatDouble(dataHMC5883L.get(2), DataFormatter.HIGH_PRECISION_FORMAT));
             }
 
-            LineDataSet dataset1 = new LineDataSet(entriesBx, getString(R.string.bx));
-            LineDataSet dataSet2 = new LineDataSet(entriesBy, getString(R.string.by));
-            LineDataSet dataSet3 = new LineDataSet(entriesBz, getString(R.string.bz));
+            LineDataSet dataSetBx = new LineDataSet(entriesBx, getString(R.string.bx));
+            LineDataSet dataSetBy = new LineDataSet(entriesBy, getString(R.string.by));
+            LineDataSet dataSetBz = new LineDataSet(entriesBz, getString(R.string.bz));
 
-            dataset1.setColor(Color.BLUE);
-            dataSet2.setColor(Color.GREEN);
-            dataSet3.setColor(Color.RED);
+            dataSetBx.setColor(Color.BLUE);
+            dataSetBy.setColor(Color.GREEN);
+            dataSetBz.setColor(Color.RED);
 
-            dataset1.setDrawCircles(true);
-            dataSet2.setDrawCircles(true);
-            dataSet3.setDrawCircles(true);
-
-            List<ILineDataSet> dataSets = new ArrayList<>();
-            dataSets.add(dataset1);
-            dataSets.add(dataSet2);
-            dataSets.add(dataSet3);
-
-            LineData data = new LineData(dataSets);
-            mChart.setData(data);
-            mChart.notifyDataSetChanged();
-            mChart.setVisibleXRangeMaximum(10);
-            mChart.moveViewToX(timeElapsed);
+            updateChart(mChart, timeElapsed, dataSetBx, dataSetBy, dataSetBz);
         }
     }
 

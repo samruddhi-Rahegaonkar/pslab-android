@@ -11,17 +11,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 import io.pslab.R;
 import io.pslab.communication.peripherals.I2C;
@@ -73,6 +67,8 @@ public class SensorTSL2561 extends AbstractSensorActivity {
         etSensorTSL2561Timing = findViewById(R.id.et_sensor_tsl2561_timing);
         mChart = findViewById(R.id.chart_tsl2561);
 
+        initChart(mChart);
+
         try {
             if (sensorTSL2561 != null & getScienceLab().isConnected()) {
                 sensorTSL2561.setGain(spinnerSensorTSL2561Gain.getSelectedItem().toString());
@@ -80,40 +76,6 @@ public class SensorTSL2561 extends AbstractSensorActivity {
         } catch (IOException e) {
             Log.e(TAG, "Error setting gain.", e);
         }
-
-        XAxis x = mChart.getXAxis();
-        YAxis y = mChart.getAxisLeft();
-        YAxis y2 = mChart.getAxisRight();
-
-        mChart.setTouchEnabled(true);
-        mChart.setHighlightPerDragEnabled(true);
-        mChart.setDragEnabled(true);
-        mChart.setScaleEnabled(true);
-        mChart.setDrawGridBackground(false);
-        mChart.setPinchZoom(true);
-        mChart.setScaleYEnabled(false);
-        mChart.setBackgroundColor(Color.BLACK);
-        mChart.getDescription().setEnabled(false);
-
-        LineData data = new LineData();
-        data.setValueTextColor(Color.WHITE);
-        mChart.setData(data);
-
-        Legend l = mChart.getLegend();
-        l.setForm(Legend.LegendForm.LINE);
-        l.setTextColor(Color.WHITE);
-
-        x.setTextColor(Color.WHITE);
-        x.setDrawGridLines(true);
-        x.setAvoidFirstLastClipping(true);
-
-        y.setTextColor(Color.WHITE);
-        y.setAxisMaximum(1700f);
-        y.setAxisMinimum(0f);
-        y.setDrawGridLines(true);
-        y.setLabelCount(10);
-
-        y2.setDrawGridLines(false);
 
         if (savedInstanceState == null) {
             entriesFull = new ArrayList<>();
@@ -182,28 +144,15 @@ public class SensorTSL2561 extends AbstractSensorActivity {
                 tvSensorTSL2561Visible.setText(String.valueOf(dataTSL2561[2]));
             }
 
-            LineDataSet dataset1 = new LineDataSet(entriesFull, getString(R.string.full));
-            LineDataSet dataSet2 = new LineDataSet(entriesInfrared, getString(R.string.infrared));
-            LineDataSet dataSet3 = new LineDataSet(entriesVisible, getString(R.string.visible));
+            LineDataSet datasetFull = new LineDataSet(entriesFull, getString(R.string.full));
+            LineDataSet dataSetInfrared = new LineDataSet(entriesInfrared, getString(R.string.infrared));
+            LineDataSet dataSetVisible = new LineDataSet(entriesVisible, getString(R.string.visible));
 
-            dataset1.setColor(Color.BLUE);
-            dataSet2.setColor(Color.GREEN);
-            dataSet3.setColor(Color.RED);
+            datasetFull.setColor(Color.BLUE);
+            dataSetInfrared.setColor(Color.GREEN);
+            dataSetVisible.setColor(Color.RED);
 
-            dataset1.setDrawCircles(true);
-            dataSet2.setDrawCircles(true);
-            dataSet3.setDrawCircles(true);
-
-            List<ILineDataSet> dataSets = new ArrayList<>();
-            dataSets.add(dataset1);
-            dataSets.add(dataSet2);
-            dataSets.add(dataSet3);
-
-            LineData data = new LineData(dataSets);
-            mChart.setData(data);
-            mChart.notifyDataSetChanged();
-            mChart.setVisibleXRangeMaximum(10);
-            mChart.moveViewToX(timeElapsed);
+            updateChart(mChart, timeElapsed, datasetFull, dataSetInfrared, dataSetVisible);
         }
     }
 
