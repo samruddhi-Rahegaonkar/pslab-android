@@ -153,12 +153,6 @@ public class SensorActivity extends GuideActivity {
                             "Sensor Not Supported", null, null, Snackbar.LENGTH_SHORT);
             }
         });
-
-        // Populate the full list of sensors initially
-        for (List<String> sensors : sensorAddr.values()) {
-            dataName.addAll(sensors);
-        }
-        adapter.notifyDataSetChanged();
     }
 
     private class PopulateSensors extends AsyncTask<Void, Void, Void> {
