@@ -118,7 +118,5 @@ dependencies {
 
     // OSS license plugin
     implementation("com.google.android.gms:play-services-oss-licenses:17.1.0")
-    implementation ("com.github.warkiz:IndicatorSeekBar:2.1.1")
-
 
 }
